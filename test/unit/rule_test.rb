@@ -246,6 +246,8 @@ class PublicSuffix::RuleWildcardTest < Minitest::Test
     assert_equal [nil, nil], @klass.build("*.do").decompose("nic.do")
     assert_equal %w[google co.uk], @klass.build("*.uk").decompose("google.co.uk")
     assert_equal %w[foo.google co.uk], @klass.build("*.uk").decompose("foo.google.co.uk")
+    assert_equal %w[foo.bar.example x.ck], @klass.build("*.ck").decompose("foo.bar.example.x.ck")
+    assert_equal [nil, nil], @klass.build("*.do").decompose("do")
   end
 
 end

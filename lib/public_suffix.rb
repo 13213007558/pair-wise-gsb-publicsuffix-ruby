@@ -143,6 +143,31 @@ module PublicSuffix
     nil
   end
 
+  # Compares two Public Suffix Lists and reports the domain families whose
+  # registration boundary (eTLD/eTLD+1) changes between them.
+  #
+  # This is useful before upgrading the bundled list: instead of a textual
+  # diff of added/removed rules, the comparison uses the actual matching
+  # semantics, so a wildcard rule fully canceled out by an exception rule is
+  # not reported as a change.
+  #
+  # @example Identify affected families before a list upgrade
+  #   comparison = PublicSuffix.compare_lists(old_content, new_content)
+  #   comparison.changed? # => true
+  #   comparison.families # => ["co.uk", "*.co.uk"]
+  #   comparison.first.witness # => "co.uk"
+  #
+  # @example Compare ICANN rules only
+  #   PublicSuffix.compare_lists(old_list, new_list, ignore_private: true)
+  #
+  # @param  old_list [PublicSuffix::List, #each_line] the current list or content
+  # @param  new_list [PublicSuffix::List, #each_line] the candidate list or content
+  # @param  ignore_private [Boolean] whether to exclude private domains
+  # @return [PublicSuffix::List::Comparison]
+  def self.compare_lists(old_list, new_list, ignore_private: false)
+    List.compare_lists(old_list, new_list, ignore_private: ignore_private)
+  end
+
 
   # private
 

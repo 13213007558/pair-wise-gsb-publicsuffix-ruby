@@ -6,6 +6,8 @@
 #
 # Copyright (c) 2009-2026 Simone Carletti <weppos@weppos.net>
 
+require_relative "list/comparison"
+
 module PublicSuffix
 
   # A {PublicSuffix::List} is a collection of one
@@ -96,6 +98,53 @@ module PublicSuffix
           end
         end
       end
+    end
+
+    # Compares the effective registration boundaries of this list against
+    # +other+ and returns a {PublicSuffix::List::Comparison}.
+    #
+    # The comparison is semantic: it resolves normal, wildcard and exception
+    # rules (including wildcards canceled out by exception rules) and reports
+    # the symbolic domain families whose eTLD/eTLD+1 changes, each with a
+    # concrete witness domain.
+    #
+    # @example Compare two parsed lists
+    #   old_list = PublicSuffix::List.parse(old_content)
+    #   new_list = PublicSuffix::List.parse(new_content)
+    #   old_list.compare(new_list).families
+    #   # => ["co.uk", "*.co.uk"]
+    #
+    # @param  other [List, #each_line] the candidate list, or its content
+    # @param  ignore_private [Boolean] whether to exclude private domains
+    # @return [PublicSuffix::List::Comparison]
+    def compare(other, ignore_private: false)
+      List.compare_lists(self, other, ignore_private: ignore_private)
+    end
+
+    # Compares two lists and returns the affected symbolic domain families.
+    #
+    # Each argument may be an already parsed {List} or any object responding
+    # to +each_line+ (such as a {String}) containing Public Suffix List data.
+    #
+    # @example Compare list contents
+    #   comparison = PublicSuffix::List.compare_lists(old_content, new_content)
+    #   comparison.each do |change|
+    #     puts "#{change.family}: #{change.witness} " \
+    #       + "#{change.old_registrable_domain} => #{change.new_registrable_domain}"
+    #   end
+    #
+    # @example Exclude the private domains section
+    #   PublicSuffix::List.compare_lists(old_list, new_list, ignore_private: true)
+    #
+    # @param  old_list [List, #each_line] the current list, or its content
+    # @param  new_list [List, #each_line] the candidate list, or its content
+    # @param  ignore_private [Boolean] whether to exclude private domains
+    # @return [PublicSuffix::List::Comparison]
+    def self.compare_lists(old_list, new_list, ignore_private: false)
+      old_list = parse(old_list) unless old_list.is_a?(List)
+      new_list = parse(new_list) unless new_list.is_a?(List)
+
+      Comparison.build(old_list, new_list, ignore_private: ignore_private)
     end
 
 

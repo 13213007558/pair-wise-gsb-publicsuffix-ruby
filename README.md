@@ -156,6 +156,41 @@ To manually add a domain to the list:
 PublicSuffix::List.default << PublicSuffix::Rule.factory('onmicrosoft.com')
 ```
 
+## Comparing two lists
+
+Before upgrading the Public Suffix List you may want to know which registration boundaries will change.
+`PublicSuffix.compare_lists` compares two lists by their actual eTLD/eTLD+1 semantics, rather than by diffing the raw text: normal, wildcard and exception rules are resolved, so a wildcard fully canceled out by an exception rule is not reported as a change.
+
+The infinite set of domain names is partitioned into symbolic domain families. Each affected family (`family`) is reported with a concrete `witness` domain, the eTLD before/after (`old_etld`/`new_etld`) and the registrable domain (eTLD+1) before/after.
+
+```ruby
+old_content = File.read("old_public_suffix_list.dat")
+new_content = File.read("new_public_suffix_list.dat")
+
+comparison = PublicSuffix.compare_lists(old_content, new_content)
+comparison.changed?       # => true
+comparison.families       # => ["co.com", "*.co.com"]
+
+change = comparison.first
+change.family                          # => "co.com"
+change.witness                         # => "co.com"
+change.old_etld                        # => "com"
+change.new_etld                        # => "co.com"
+change.old_registrable_domain          # => "co.com"
+change.new_registrable_domain          # => nil
+change.match?("example.co.com", comparison)
+# => true if the name belongs to the affected family
+```
+
+Arguments can be list contents (a `String` or any object responding to `each_line`) or already parsed `PublicSuffix::List` instances. Pass `ignore_private: true` to compare ICANN rules only, ignoring the private domains section:
+
+```ruby
+PublicSuffix.compare_lists(old_list, new_list, ignore_private: true)
+
+# You can also start from a parsed list
+old_list.compare(new_list)
+```
+
 ## What is the public suffix list?
 
 The [Public Suffix List](https://publicsuffix.org) is a cross-vendor initiative to provide an accurate list of domain name suffixes.

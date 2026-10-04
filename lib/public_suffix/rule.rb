@@ -246,9 +246,14 @@ module PublicSuffix
       # @param  domain [#to_s] The domain name to decompose
       # @return [Array<String>] The array with [trd + sld, tld].
       def decompose(domain)
-        suffix = ([".*?"] + parts).join('\.')
-        matches = domain.to_s.match(/^(.*)\.(#{suffix})$/)
-        matches ? matches[1..2] : [nil, nil]
+        labels = domain.to_s.split(DOT)
+        tld_size = parts.size + 1
+        # The wildcard consumes one additional label: the name must contain
+        # at least one label on top of the concrete suffix (see *.ck rules).
+        return [nil, nil] if labels.size <= tld_size
+
+        tld = labels.last(tld_size).join(DOT)
+        [labels[0...-tld_size].join(DOT), tld]
       end
 
       # dot-split rule value and returns all rule parts
