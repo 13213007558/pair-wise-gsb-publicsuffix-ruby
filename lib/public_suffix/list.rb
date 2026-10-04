@@ -98,6 +98,15 @@ module PublicSuffix
       end
     end
 
+    # Compares two lists by the effective TLD and registrable domain they produce.
+    #
+    # @param  old_list [PublicSuffix::List]
+    # @param  new_list [PublicSuffix::List]
+    # @return [Array<PublicSuffix::ListComparison::Change>]
+    def self.compare_lists(old_list, new_list)
+      ListComparison.compare(old_list, new_list)
+    end
+
 
     # Initializes an empty {PublicSuffix::List}.
     #

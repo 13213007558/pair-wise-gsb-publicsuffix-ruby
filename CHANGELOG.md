@@ -7,6 +7,10 @@
 
 - Read default list data as UTF-8 to avoid `Encoding::CompatibilityError` when locale is not set to UTF-8 (#118).
 
+### Added
+
+- Added `PublicSuffix.compare_lists` and a `compare_lists` Rake task to report semantic eTLD/eTLD+1 registration-boundary changes, including wildcard exception carve-outs and optional private-domain exclusion.
+
 
 ## 7.0.5 - 2026-03-03
 

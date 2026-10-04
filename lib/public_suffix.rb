@@ -11,6 +11,7 @@ require_relative "public_suffix/version"
 require_relative "public_suffix/errors"
 require_relative "public_suffix/rule"
 require_relative "public_suffix/list"
+require_relative "public_suffix/list_comparison"
 
 # PublicSuffix is a Ruby domain name parser based on the Public Suffix List.
 #
@@ -143,6 +144,21 @@ module PublicSuffix
     nil
   end
 
+  # Compares two Public Suffix List revisions by actual effective TLD semantics.
+  #
+  # String inputs are treated as paths when they point to a readable file,
+  # otherwise as list content.
+  #
+  # @param  old_list [PublicSuffix::List, String, Pathname]
+  # @param  new_list [PublicSuffix::List, String, Pathname]
+  # @param  private_domains [Boolean]
+  # @return [Array<PublicSuffix::ListComparison::Change>]
+  def self.compare_lists(old_list, new_list, private_domains: true)
+    old_list = coerce_list_for_comparison(old_list, private_domains)
+    new_list = coerce_list_for_comparison(new_list, private_domains)
+    List.compare_lists(old_list, new_list)
+  end
+
 
   # private
 
@@ -159,6 +175,24 @@ module PublicSuffix
 
     Domain.new(tld, sld, trd)
   end
+
+  def self.coerce_list_for_comparison(input, private_domains)
+    case input
+    when List
+      input
+    when String
+      content = File.file?(input) ? File.read(input, encoding: Encoding::UTF_8) : input
+      List.parse(content, private_domains: private_domains)
+    else
+      if input.respond_to?(:to_path)
+        path = input.to_path
+        List.parse(File.read(path, encoding: Encoding::UTF_8), private_domains: private_domains)
+      else
+        raise ArgumentError, "Expected a PublicSuffix::List, path, or list content"
+      end
+    end
+  end
+  private_class_method :coerce_list_for_comparison
 
   # Pretend we know how to deal with user input.
   def self.normalize(name)

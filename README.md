@@ -148,6 +148,36 @@ PublicSuffix.domain("something.blogspot.com")
 # => "blogspot.com"
 ```
 
+## Comparing list revisions
+
+Use `compare_lists` to see which registration boundaries change between two list files. The comparison evaluates eTLD and eTLD+1 with the parser itself, so comments, reordered rules, wildcard rules canceled by exceptions, and other text-only changes do not produce false positives.
+
+```ruby
+changes = PublicSuffix.compare_lists("old-list.txt", "new-list.txt")
+
+changes.each do |change|
+  puts change.family
+  puts change.witness
+  puts change.old_registrable_domain
+  puts change.new_registrable_domain
+end
+```
+
+`family` describes the affected eTLD+1 set symbolically. `*.example` represents registrations at one wildcard level, while `*.*.example` represents the new registrations formed one level beyond that. `excluded_families` identifies subtrees removed from that set, for example a concrete exception that cancels a wildcard. Each change also includes one concrete `witness` domain.
+
+To compare only the ICANN section:
+
+```ruby
+PublicSuffix.compare_lists("old-list.txt", "new-list.txt", private_domains: false)
+```
+
+There is also a Rake task for file-based reports:
+
+```shell
+rake compare_lists[old-list.txt,new-list.txt]
+PRIVATE_DOMAINS=false rake compare_lists[old-list.txt,new-list.txt]
+```
+
 ## Adding custom domains
 
 To manually add a domain to the list:
